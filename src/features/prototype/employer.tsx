@@ -305,17 +305,18 @@ export function EmployerJobEditor() {
                 wklejanie ze schowka wyłączone).
               </p>
             </div>
-            <label className="flex items-center gap-3 font-medium">
-              <Checkbox
-                checked={screeningEnabled}
-                onCheckedChange={(v) => {
-                  setScreeningEnabled(v);
-                  setApproved(false);
-                }}
-                aria-label="Wymagaj odpowiedzi na pytanie kontrolne"
-              />
-              <span>Wymagaj odpowiedzi przy aplikacji</span>
-            </label>
+            <Button
+              type="button"
+              size="sm"
+              variant={screeningEnabled ? "default" : "outline"}
+              aria-pressed={screeningEnabled}
+              onClick={() => {
+                setScreeningEnabled(!screeningEnabled);
+                setApproved(false);
+              }}
+            >
+              {screeningEnabled ? "✓ Mikro-Check aktywny" : "Włącz Mikro-Check (60s)"}
+            </Button>
           </div>
           {screeningEnabled && (
             <div className="space-y-3">
