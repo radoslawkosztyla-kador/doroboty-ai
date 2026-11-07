@@ -24,7 +24,16 @@ export function ApplicationRecord({
 }: {
   application: Pick<
     Application,
-    "candidateId" | "candidateName" | "jobTitle" | "stage" | "answer" | "cv" | "score" | "summary"
+    | "candidateId"
+    | "candidateName"
+    | "jobTitle"
+    | "stage"
+    | "answer"
+    | "cv"
+    | "score"
+    | "summary"
+    | "screeningAnswer"
+    | "screeningTimeSeconds"
   >;
   companyName: string;
   audience: "candidate" | "employer";
@@ -56,6 +65,12 @@ export function ApplicationRecord({
             {stageLabels[application.stage]}
           </span>
           <MatchScore score={application.score} />
+          {application.screeningAnswer && (
+            <span>
+              ✓ Mikro-Check zweryfikowany
+              {application.screeningTimeSeconds ? ` (${application.screeningTimeSeconds} s)` : ""}
+            </span>
+          )}
           {submitted && (
             <span>
               Złożona:{" "}
@@ -73,6 +88,18 @@ export function ApplicationRecord({
               label: "Odpowiedź",
               content: (
                 <>
+                  {application.screeningAnswer && (
+                    <div className="mb-6 rounded-lg border bg-muted/30 p-4">
+                      <h3>Odpowiedź na Mikro-Pytanie Pułapkowe (Smart Screening)</h3>
+                      <p className="mt-2 font-medium">{application.screeningAnswer}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Wpisano ręcznie bez wklejania ze schowka
+                        {application.screeningTimeSeconds
+                          ? ` · Czas odpowiedzi: ${application.screeningTimeSeconds} s`
+                          : ""}
+                      </p>
+                    </div>
+                  )}
                   <h3>Przesłana aplikacja</h3>
                   <p>{application.answer}</p>
                 </>

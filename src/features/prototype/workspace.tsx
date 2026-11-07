@@ -241,7 +241,9 @@ export function ApplyPage() {
   const [answer, setAnswer] = useState(draft?.answer ?? "");
   const [consent, setConsent] = useState(false);
   const [message, setMessage] = useState("");
+  const [pasteBlocked, setPasteBlocked] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const startedAt = useRef(Date.now());
   const answerInput = useRef<HTMLTextAreaElement>(null);
   const sendButton = useRef<HTMLButtonElement>(null);
   const submittedOnce = useRef(false);
@@ -281,7 +283,19 @@ export function ApplyPage() {
       document.getElementById("application-consent")?.focus();
       return;
     }
-    if (run({ type: "submit", jobId: job!.id, notes, generated, answer, consent })) {
+    const elapsedSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
+    if (
+      run({
+        type: "submit",
+        jobId: job!.id,
+        notes,
+        generated,
+        answer,
+        consent,
+        screeningAnswer: job!.screeningEnabled ? answer.trim() : undefined,
+        screeningTimeSeconds: job!.screeningEnabled ? elapsedSeconds : undefined,
+      })
+    ) {
       submittedOnce.current = true;
       setSubmitted(true);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -326,6 +340,18 @@ export function ApplyPage() {
             className="application-form-section application-answer"
             aria-label="Odpowiedź do aplikacji"
           >
+            {job.screeningEnabled && job.screeningQuestion && (
+              <div className="mb-4 rounded-lg border bg-muted/40 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Mikro-Pytanie Pułapkowe (Smart Screening · 60–90 s)
+                </p>
+                <p className="mt-1 font-medium">{job.screeningQuestion}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Zasada Zero Friction: odpowiedz krótko (2–3 zdania) z własnego doświadczenia.
+                  Wklejanie ze schowka jest wyłączone.
+                </p>
+              </div>
+            )}
             <Field label="Dlaczego pasujesz do tej roli?">
               <Textarea
                 disabled={submitted}
@@ -336,12 +362,25 @@ export function ApplyPage() {
                 aria-invalid={answerInvalid || undefined}
                 aria-describedby="application-answer-help"
                 value={answer}
+                onPaste={(e) => {
+                  if (job.screeningEnabled) {
+                    e.preventDefault();
+                    setPasteBlocked(true);
+                  }
+                }}
                 onChange={(e) => {
                   setAnswer(e.target.value);
+                  setPasteBlocked(false);
                   setConsent(false);
                 }}
               />
             </Field>
+            {pasteBlocked && (
+              <p className="mt-2 text-sm font-medium text-destructive">
+                Wklejanie ze schowka jest zablokowane dla ofert z Mikro-Checkiem — wpisz odpowiedź
+                samodzielnie z głowy.
+              </p>
+            )}
             <p
               id="application-answer-help"
               role={answerInvalid ? "alert" : undefined}
@@ -452,8 +491,21 @@ export function ApplicationsPage({ employer = false }: { employer?: boolean }) {
                   </p>
                   <p>{stageLabels[a.stage]}</p>
                 </div>
-                <MatchScore score={a.score} />
+                <div className="flex flex-wrap items-center gap-2">
+                  {a.screeningAnswer && (
+                    <span className="rounded border px-2 py-0.5 text-xs font-medium">
+                      ✓ Mikro-Check ({a.screeningTimeSeconds ?? 60}s)
+                    </span>
+                  )}
+                  <MatchScore score={a.score} />
+                </div>
               </div>
+              {employer && a.screeningAnswer && (
+                <div className="mt-3 rounded border bg-muted/30 p-3 text-sm">
+                  <p className="font-semibold">Odpowiedź na pytanie kontrolne:</p>
+                  <p className="mt-1">{a.screeningAnswer}</p>
+                </div>
+              )}
               {employer && <p className="mt-4 text-muted-foreground">{a.summary}</p>}
             </article>
           ))
