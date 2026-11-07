@@ -17,6 +17,27 @@ import { usePrototype } from "./store";
 import { Field } from "./workspace";
 import { Empty, NotFound, PageTitle } from "./shell";
 
+const SCREENING_TEMPLATES = [
+  {
+    id: "tpl-build",
+    label: "Szablon BUILD (RAG / Pipeline)",
+    question:
+      "Nasz agent RAG przy 50 dokumentach gubi precyzję cytowania dat w tabelach. W 2–3 zdaniach: co sprawdzisz najpierw w pipeline i dlaczego?",
+  },
+  {
+    id: "tpl-apply",
+    label: "Szablon APPLY (Automatyzacje / Workflow)",
+    question:
+      "Pokaż, w którym miejscu wygenerowany kod agenta wpadnie w nieskończoną pętlę przy błędzie API 429 i jak to zabezpieczysz.",
+  },
+  {
+    id: "tpl-lead",
+    label: "Szablon LEAD (Product / Architecture)",
+    question:
+      "Zarząd chce zastąpić programistów autonomicznymi agentami. W 2–3 zdaniach: gdzie model agentowy zawodzi bez Product Engineera?",
+  },
+] as const;
+
 export function EmployerJobs() {
   const { state } = usePrototype();
   const person = currentPerson(state)!;
@@ -47,14 +68,25 @@ export function EmployerJobs() {
                   <p className="mt-3 text-muted-foreground">
                     {state.applications.filter((x) => x.jobId === job.id).length} aplikacji ·{" "}
                     {job.publicationStatus === "published" ? "Opublikowana" : "Szkic"}
+                    {job.screeningEnabled && job.screeningQuestion
+                      ? " · Mikro-Check (60s) aktywny"
+                      : ""}
                   </p>
                 </div>
-                <Link
-                  to={`/oferty/${job.slug}`}
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  Zobacz ofertę
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to={`/app/oferty/${job.id}`}
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Edytuj
+                  </Link>
+                  <Link
+                    to={`/oferty/${job.slug}`}
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Zobacz ofertę
+                  </Link>
+                </div>
               </div>
             </article>
           ))
@@ -76,6 +108,10 @@ export function EmployerJobEditor() {
   const [description, setDescription] = useState(existing?.description ?? "");
   const [source, setSource] = useState(existing?.sourceBrief ?? "");
   const [generated, setGenerated] = useState(existing?.generatedDescription ?? "");
+  const [screeningEnabled, setScreeningEnabled] = useState(existing?.screeningEnabled ?? true);
+  const [screeningQuestion, setScreeningQuestion] = useState(
+    existing?.screeningQuestion ?? SCREENING_TEMPLATES[0].question,
+  );
   const [approved, setApproved] = useState(false);
   const [error, setError] = useState("");
   if (id !== "nowa" && !existing) return <NotFound />;
@@ -84,6 +120,10 @@ export function EmployerJobEditor() {
     setError("");
     if (!approved) {
       setError("Zatwierdź opis przed publikacją.");
+      return;
+    }
+    if (screeningEnabled && screeningQuestion.trim().length < 15) {
+      setError("Wpisz pytanie kontrolne (min. 15 znaków) lub wyłącz Mikro-Check.");
       return;
     }
     const data = new FormData(e.currentTarget);
@@ -97,6 +137,8 @@ export function EmployerJobEditor() {
       description,
       sourceBrief: source,
       generatedDescription: generated,
+      screeningEnabled,
+      screeningQuestion: screeningEnabled ? screeningQuestion.trim() : undefined,
       category: data.get("category"),
       function: data.get("function"),
       remoteStatus: data.get("remoteStatus"),
@@ -252,6 +294,62 @@ export function EmployerJobEditor() {
             <Input name="salaryMax" type="number" min="0" defaultValue={existing?.salaryMax} />
           </Field>
         </div>
+        <section className="prototype-panel space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">
+                Mikro-Pytanie Pułapkowe (Smart Screening 60s)
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Zastępuje zawodny algorytm Match Score krótką próbką myślenia kandydata (2–3 zdania,
+                wklejanie ze schowka wyłączone).
+              </p>
+            </div>
+            <label className="flex items-center gap-3 font-medium">
+              <Checkbox
+                checked={screeningEnabled}
+                onCheckedChange={(v) => {
+                  setScreeningEnabled(v);
+                  setApproved(false);
+                }}
+                aria-label="Wymagaj odpowiedzi na pytanie kontrolne"
+              />
+              <span>Wymagaj odpowiedzi przy aplikacji</span>
+            </label>
+          </div>
+          {screeningEnabled && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {SCREENING_TEMPLATES.map((tpl) => (
+                  <Button
+                    key={tpl.id}
+                    type="button"
+                    size="sm"
+                    variant={screeningQuestion === tpl.question ? "default" : "outline"}
+                    onClick={() => {
+                      setScreeningQuestion(tpl.question);
+                      setApproved(false);
+                    }}
+                  >
+                    {tpl.label}
+                  </Button>
+                ))}
+              </div>
+              <Field label="Treść pytania pułapkowego dla kandydata (odpowiedź w 60–90 sekund)">
+                <Textarea
+                  required={screeningEnabled}
+                  minLength={15}
+                  maxLength={500}
+                  value={screeningQuestion}
+                  onChange={(e) => {
+                    setScreeningQuestion(e.target.value);
+                    setApproved(false);
+                  }}
+                />
+              </Field>
+            </div>
+          )}
+        </section>
         <label className="flex items-start gap-3">
           <Checkbox
             checked={approved}
