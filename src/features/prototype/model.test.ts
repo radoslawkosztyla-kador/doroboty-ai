@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initialState, transition, stateSchema, type State } from "./model";
+import { initialState, transition, stateSchema, jobSchema, type State } from "./model";
 const time = "2026-11-03T10:00:00.000Z";
 function as(state: State, id: string) {
   return transition(state, { type: "select_person", id });
@@ -124,6 +124,39 @@ describe("coherent browser scenario", () => {
     const unknown = initialState();
     unknown.jobs[0].companyId = "missing";
     expect(stateSchema.safeParse(unknown).success).toBe(false);
+  });
+  it("supports smart screening question in jobs and candidate answer in applications", () => {
+    let s = as(initialState(), "employer-brightlabs");
+    const testJob = {
+      ...s.jobs[0],
+      id: "job-screening-test",
+      slug: "job-screening-test",
+      screeningEnabled: true,
+      screeningQuestion: "Co sprawdzisz najpierw w pipeline RAG?",
+    };
+    s.jobs.push(testJob);
+    expect(jobSchema.safeParse(testJob).success).toBe(true);
+
+    s = as(s, "candidate-anna");
+    s = transition(
+      s,
+      {
+        type: "submit",
+        jobId: "job-screening-test",
+        notes: "Notes",
+        generated: "Generated",
+        answer: "Odpowiedź na formularz o długości przekraczającej minimalne wymagania znaków.",
+        consent: true,
+        screeningAnswer: "Sprawdzam chunking dokumentów i separację metadanych.",
+        screeningTimeSeconds: 68,
+      },
+      time,
+    );
+    const app = s.applications.find((a) => a.jobId === "job-screening-test");
+    expect(app).toBeDefined();
+    expect(app?.screeningAnswer).toBe("Sprawdzam chunking dokumentów i separację metadanych.");
+    expect(app?.screeningTimeSeconds).toBe(68);
+    expect(stateSchema.safeParse(s).success).toBe(true);
   });
   it("only publishes own-company jobs and keeps submitted job snapshots unchanged", () => {
     const state = as(submitted(), "employer-brightlabs");

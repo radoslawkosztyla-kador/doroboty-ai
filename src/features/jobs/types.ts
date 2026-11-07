@@ -61,6 +61,8 @@ export type Job = {
   publishedAt: string;
   expiryAt: string;
   verificationStatus: "unverified" | "editorial" | "employer_verified";
+  screeningEnabled?: boolean;
+  screeningQuestion?: string;
 };
 
 export type JobWithCompany = Job & { company: Company };

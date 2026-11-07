@@ -53,6 +53,8 @@ export const jobSchema = z
     verificationStatus: z.enum(["unverified", "editorial", "employer_verified"]),
     sourceBrief: text.optional(),
     generatedDescription: text.optional(),
+    screeningEnabled: z.boolean().optional(),
+    screeningQuestion: text.optional(),
   })
   .refine(
     (job) =>
@@ -115,6 +117,8 @@ const applicationSchema = z.object({
   answer: text.min(MIN_APPLICATION_ANSWER_LENGTH),
   sourceNotes: text,
   generatedAnswer: text,
+  screeningAnswer: text.optional(),
+  screeningTimeSeconds: z.number().int().nonnegative().optional(),
   score: z.number().int().min(0).max(100),
   summary: text,
   stage: z.enum(stages),
@@ -129,6 +133,7 @@ const draftSchema = z.object({
   notes: text,
   generated: text,
   answer: text,
+  screeningAnswer: text.optional(),
 });
 export const stateSchema = z
   .object({
@@ -201,7 +206,14 @@ export type Action =
   | { type: "select_person"; id: string | null }
   | { type: "profile"; value: z.infer<typeof profileSchema> }
   | { type: "toggle_saved"; jobId: string }
-  | { type: "draft"; jobId: string; notes: string; generated: string; answer: string }
+  | {
+      type: "draft";
+      jobId: string;
+      notes: string;
+      generated: string;
+      answer: string;
+      screeningAnswer?: string;
+    }
   | {
       type: "submit";
       jobId: string;
@@ -209,6 +221,8 @@ export type Action =
       generated: string;
       answer: string;
       consent: boolean;
+      screeningAnswer?: string;
+      screeningTimeSeconds?: number;
     }
   | { type: "stage"; applicationId: string; stage: Stage; note: string }
   | { type: "withdraw"; applicationId: string }
@@ -227,6 +241,9 @@ export function initialState(): State {
   });
   const bob = state.people.find((x) => x.id === "candidate-marek")!;
   const job = state.jobs[0];
+  job.screeningEnabled = true;
+  job.screeningQuestion =
+    "Nasz agent RAG przy 50 dokumentach gubi precyzję cytowania dat w tabelach. W 2–3 zdaniach: co sprawdzisz najpierw w pipeline i dlaczego?";
   state.applications.push({
     id: "application-example",
     candidateId: bob.id,
@@ -239,6 +256,9 @@ export function initialState(): State {
       "Pracowałem nad automatyzacją obsługi zgłoszeń. Poprowadziłem badania z użytkownikami i wdrożenie, które skróciło czas odpowiedzi o 25%. Chętnie opowiem o decyzjach i ograniczeniach tego projektu.",
     sourceNotes: "",
     generatedAnswer: "",
+    screeningAnswer:
+      "Sprawdzam strategię chunkingu — przy sztywnym podziale co 500 tokenów daty z nagłówków odrywają się od wierszy tabeli. Wdrażam Parent-Document Retriever oraz ekstrakcję metadanych daty przed embeddingiem.",
+    screeningTimeSeconds: 72,
     score: bob.exampleScore,
     summary: bob.exampleSummary,
     stage: "submitted",
@@ -310,6 +330,8 @@ export function transition(
         answer: action.answer,
         sourceNotes: action.notes,
         generatedAnswer: action.generated,
+        screeningAnswer: action.screeningAnswer,
+        screeningTimeSeconds: action.screeningTimeSeconds,
         score: p.exampleScore,
         summary: p.exampleSummary,
         stage: "submitted",
