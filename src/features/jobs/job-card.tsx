@@ -35,6 +35,9 @@ export function JobCard({ job, saved }: { job: JobWithCompany; saved?: boolean }
         </div>
         <div className="pp-job-tags">
           <span>{functionLabels[job.function]}</span>
+          {job.screeningEnabled && job.screeningQuestion && (
+            <span>Mikro-Check (60s) — weryfikacja bez AI-slopu</span>
+          )}
         </div>
       </div>
       <div className="pp-job-side">
