@@ -18,6 +18,7 @@ import { BrandMark } from "@/features/public/brand-mark";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { currentPerson } from "./model";
 import { usePrototype } from "./store";
+import { trackPageView } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 const navigation = [
   { to: "/oferty", label: "Oferty" },
@@ -75,13 +76,14 @@ export function Shell() {
   const main = useRef<HTMLElement>(null);
   const lastPath = useRef(pathname);
   useEffect(() => {
+    trackPageView(pathname, person?.role);
     if (lastPath.current !== pathname) {
       clearError();
       main.current?.focus();
       window.scrollTo(0, 0);
       lastPath.current = pathname;
     }
-  }, [pathname, clearError]);
+  }, [pathname, person?.role, clearError]);
   const nav =
     person?.role === "employer"
       ? employerNav

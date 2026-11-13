@@ -2,6 +2,7 @@ import { Component, type ReactNode } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router";
 import { PrototypeProvider } from "./store";
 import { Shell, NotFound } from "./shell";
+import { trackException } from "@/lib/analytics";
 import HomePage from "./home";
 import MethodologyPage from "./methodology";
 import { JobsPage, JobPage, CompanyPage } from "./marketplace";
@@ -156,8 +157,9 @@ export class PrototypeErrorBoundary extends Component<
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch() {
+  componentDidCatch(error: Error) {
     // Deliberately do not log private free text or user input (AGENTS.md standard).
+    trackException(error);
   }
   render() {
     if (this.state.hasError) {
