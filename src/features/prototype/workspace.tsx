@@ -16,6 +16,7 @@ import { CvAttachment } from "./cv-attachment";
 import { MatchScore } from "./match-score";
 import { RecruitingApplication } from "./recruiting-application";
 import { CandidateApplication } from "./candidate-application";
+import { trackEvent } from "@/lib/analytics";
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -296,6 +297,12 @@ export function ApplyPage() {
         screeningTimeSeconds: job!.screeningEnabled ? elapsedSeconds : undefined,
       })
     ) {
+      trackEvent("application_submitted", {
+        job_id: job!.id,
+        job_slug: job!.slug,
+        screening_verified: Boolean(job!.screeningEnabled),
+        screening_time_seconds: elapsedSeconds,
+      });
       submittedOnce.current = true;
       setSubmitted(true);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -366,6 +373,10 @@ export function ApplyPage() {
                   if (job.screeningEnabled) {
                     e.preventDefault();
                     setPasteBlocked(true);
+                    trackEvent("screening_paste_blocked", {
+                      job_id: job.id,
+                      job_slug: job.slug,
+                    });
                   }
                 }}
                 onChange={(e) => {

@@ -16,6 +16,7 @@ import { currentPerson, jobSchema } from "./model";
 import { usePrototype } from "./store";
 import { Field } from "./workspace";
 import { Empty, NotFound, PageTitle } from "./shell";
+import { trackEvent } from "@/lib/analytics";
 
 const SCREENING_TEMPLATES = [
   {
@@ -175,7 +176,15 @@ export function EmployerJobEditor() {
       );
       return;
     }
-    if (run({ type: "publish", job: parsed.data })) navigate("/app/oferty");
+    if (run({ type: "publish", job: parsed.data })) {
+      trackEvent("job_published_by_employer", {
+        job_id: parsed.data.id,
+        job_slug: parsed.data.slug,
+        category: parsed.data.category,
+        screening_enabled: Boolean(parsed.data.screeningEnabled),
+      });
+      navigate("/app/oferty");
+    }
   }
   return (
     <>

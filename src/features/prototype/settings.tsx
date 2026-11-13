@@ -134,9 +134,11 @@ export function PrivacyPage() {
           ani poufnych informacji.
         </p>
         <p>
-          Profile, aplikacje i ustawienia pozostają w pamięci tej przeglądarki. Aplikacja nie wysyła
-          ich do bazy, dostawcy AI ani systemu analitycznego. Plik eksportu zawiera cały lokalny
-          scenariusz, w tym notatki.
+          Profile, aplikacje i ustawienia pozostają w pamięci tej przeglądarce. Treści formularzy i
+          notatek nie są wysyłane do bazy ani dostawcy AI; plik eksportu zawiera cały lokalny
+          scenariusz. W celach ewaluacji użyteczności prototypu anonimowe zdarzenia nawigacji i
+          błędów technicznych (z maskowaniem pól tekstowych, bez przesyłania treści odpowiedzi) są
+          rejestrowane przez PostHog Cloud w regionie Unii Europejskiej (eu.posthog.com).
         </p>
         <p>
           Możesz usunąć zmiany przyciskiem „Resetuj scenariusz” w ustawieniach lub wyczyścić dane
