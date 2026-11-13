@@ -8,7 +8,7 @@ This document defines the release procedure, post-deployment smoke verification,
 
 - **Incident Owner:** Radosław Kosztyła (Product Builder / Owner)
 - **Access & Permissions:**
-  - GitHub repository: `radoslawkosztyla-kador/doroboty-ai` (branch protection, Actions CI, `main` branch)
+  - GitHub repository: [`radoslawkosztyla-kador/doroboty-ai`](https://github.com/radoslawkosztyla-kador/doroboty-ai) (branch protection, Actions CI, `main` branch)
   - Hosting: Vercel project linked to `radoslawkosztyla-kador/doroboty-ai`
   - Analytics / Monitoring (Quest 4.3): PostHog Cloud EU (`https://eu.posthog.com`)
 - **Issue Reporting Channel:** GitHub Issues in the project repository or direct report to the owner during AIPH 3 evaluation sessions (visible to users in `/#/app/settings` and `/#/polityka-prywatnosci`, with an explicit warning never to attach personal or confidential data).
