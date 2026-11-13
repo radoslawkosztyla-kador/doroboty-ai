@@ -100,6 +100,16 @@ export function SettingsPage() {
           przygotowany scenariusz; nie oceniają kompetencji. Używaj przykładowych danych i CV.
         </p>
       </section>
+      <section className="prototype-panel prototype-form mt-6">
+        <h2>Zgłaszanie problemów</h2>
+        <p>
+          Jeśli zauważysz błąd działania lub wyświetlania, zgłoś go w repozytorium projektu
+          (zakładka Issues na GitHubie) lub bezpośrednio właścicielowi prototypu podczas sesji AIPH
+          3. W zgłoszeniu podaj wybraną osobę (np. Anna Kowalska), adres podstrony i kroki do
+          odtworzenia błędu. Nie przesyłaj prawdziwych danych osobowych, prywatnych CV ani poufnych
+          informacji.
+        </p>
+      </section>
       <ConfirmDialog
         open={pending !== null}
         onOpenChange={(v) => {
@@ -131,6 +141,11 @@ export function PrivacyPage() {
         <p>
           Możesz usunąć zmiany przyciskiem „Resetuj scenariusz” w ustawieniach lub wyczyścić dane
           witryny w przeglądarce. Hosting może prowadzić własne logi dostępu.
+        </p>
+        <p>
+          Błędy działania prototypu można zgłaszać w zakładce Issues repozytorium GitHub projektu,
+          opisując wybraną rolę i wykonany krok — bez załączania danych osobowych ani poufnych
+          dokumentów.
         </p>
       </div>
     </section>

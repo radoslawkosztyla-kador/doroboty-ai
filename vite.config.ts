@@ -7,4 +7,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: "./",
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/lucide-react")) return "vendor-icons";
+          if (id.includes("node_modules/zod")) return "vendor-zod";
+          if (id.includes("node_modules/react-router")) return "vendor-router";
+        },
+      },
+    },
+  },
 });

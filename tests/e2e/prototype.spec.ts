@@ -28,7 +28,13 @@ for (const [name, filename] of [
   }) => {
     const external: string[] = [];
     page.on("request", (request) => {
-      if (!request.url().startsWith("http://127.0.0.1:3106")) external.push(request.url());
+      const url = request.url();
+      if (
+        !url.startsWith("http://127.0.0.1:3106") &&
+        !url.startsWith("chrome://") &&
+        !url.startsWith("chrome-extension://")
+      )
+        external.push(url);
     });
     await choose(page, name);
     await page.goto("/#/app/profil");
@@ -994,4 +1000,34 @@ test("candidate snapshot supports custom CV and long content at desktop and mobi
   await expect(page.getByRole("tabpanel", { name: "Odpowiedź", exact: true })).toContainText(
     record.answer,
   );
+});
+
+test("screening question blocks clipboard paste and displays verified answer to employer", async ({
+  page,
+}) => {
+  await choose(page, "Anna Kowalska");
+  await page.goto("/#/aplikuj/ai-product-manager");
+  const answer = page.getByLabel("Dlaczego pasujesz do tej roli?");
+  await answer.focus();
+  await answer.dispatchEvent("paste");
+  await expect(
+    page.getByText("Wklejanie ze schowka jest wyłączone", { exact: false }),
+  ).toBeVisible();
+  const manualAnswer =
+    "Sprawdzam strategię chunkingu tabel i dodaję ekstrakcję metadanych daty przed embeddingiem.";
+  await answer.fill(manualAnswer);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Wyślij aplikację", exact: true }).click();
+  await expect(page.getByText("Aplikacja została wysłana.", { exact: false })).toBeVisible();
+  await choose(page, "Karolina Wiśniewska");
+  await page.goto("/#/app/kandydaci");
+  await page.getByRole("link", { name: "Anna Kowalska", exact: true }).click();
+  await expect(page.getByText("✓ Mikro-Check zweryfikowany", { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Odpowiedź na Mikro-Pytanie Pułapkowe (Smart Screening)",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator("main")).toContainText(manualAnswer);
 });

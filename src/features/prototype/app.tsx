@@ -1,3 +1,4 @@
+import { Component, type ReactNode } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router";
 import { PrototypeProvider } from "./store";
 import { Shell, NotFound } from "./shell";
@@ -147,12 +148,53 @@ function AppRoutes() {
     </Routes>
   );
 }
+export class PrototypeErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    // Deliberately do not log private free text or user input (AGENTS.md standard).
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="prototype-section max-w-2xl p-6">
+          <h1>Wystąpił nieoczekiwany błąd wyświetlania</h1>
+          <p className="my-4">
+            Aplikacja napotkała błąd techniczny. Twoje dane zapisane w tej przeglądarce pozostały
+            nienaruszone i nie zostały nigdzie wysłane.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="#/app/settings"
+              onClick={() => this.setState({ hasError: false })}
+              className="underline"
+            >
+              Przejdź do ustawień i eksportu danych
+            </a>
+            <button type="button" onClick={() => window.location.reload()} className="underline">
+              Odśwież stronę
+            </button>
+          </div>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function App() {
   return (
-    <PrototypeProvider>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
-    </PrototypeProvider>
+    <PrototypeErrorBoundary>
+      <PrototypeProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </PrototypeProvider>
+    </PrototypeErrorBoundary>
   );
 }
